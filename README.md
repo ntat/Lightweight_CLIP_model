@@ -1,8 +1,8 @@
 ## Introduction
 This is a minimal implementation of the CLIP model proposed by OpenAI, using PyTorch. 
 
-This implementation is based on the famous CLIP paper: [Learning Transferable Visual Models From Natural Language Supervision](https://arxiv.org/abs/2103.00020)
-TODO: Try the SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/pdf/2303.15343)
+This implementation is based on the famous CLIP paper: [Learning Transferable Visual Models From Natural Language Supervision](https://arxiv.org/abs/2103.00020)  
+_TODO: Try the SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/pdf/2303.15343)_
 
 ![clip_model](assets/clip_desc.png)
 
