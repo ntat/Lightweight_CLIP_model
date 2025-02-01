@@ -7,7 +7,7 @@ _TODO: Try the SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](
 ![clip_model](assets/clip_desc.png)
 
 
-The idea of CLIP is basically to map two different modalities that describe similar things (ie an image and its caption) into a shared vector space. Practically speaking, the model leverages the very rich descriptive power of transformers (here we use ViT for pics and bert-uncased for text, as our encoders for feature extraction), in order to make sense of how an image and its corresponding text align together, allowing it to generalize across different features it has seen. It can be extended to other modalities such as speech and text etc.
+The idea of CLIP is basically to map two different modalities that describe similar things (ie an image and its caption) into a shared vector space. Practically speaking, the model leverages the very rich descriptive power of transformers in order to make sense of how an image and its corresponding text align together, allowing it to generalize across different features it has seen (here we use ViT for pics and bert-uncased for text, as our encoders for feature extraction). This method can be extended to other modalities such as speech and text.
 
 CLIP is capable of:
 - **Zero-shot classification:** Predicting the category of an image without any task-specific training.
