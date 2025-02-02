@@ -23,8 +23,9 @@ For this particular project we look into two training schemes:
 - **Projection Layer training only** This requires to pre-extract image and text embeddings and then train 
 the projection layers on these embeddings (Very fast training and solid results, only bottleneck is 
 embedding extraction).
-- **Train everything (ie backpropagate gradients back to the transformers), this is slower - depends on your 
-hardware, but yields best results.**  
+- **Train everything** (ie backpropagate gradients back to the transformers), this is slower - depends on 
+your 
+hardware, but yields best results.  
 
 ## General Requirements
 - `Python >= 3.8`
