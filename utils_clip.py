@@ -13,8 +13,8 @@ from torch.utils.data import Dataset
 class CocoCaptionDataset(torch.utils.data.Dataset):
     def __init__(self, coco_dataset, mode="train", processor_name="google/vit-base-patch16-224"):
         self.coco_dataset = coco_dataset
-        if mode not in ["train", "val"]:
-            raise ValueError("Mode must be either 'train' or 'val'")
+        if mode not in ["train", "val", "test"]:
+            raise ValueError("Mode must be either 'train' or 'val' or 'test'")
         self.mode = mode
         self.image_processor = ViTImageProcessor.from_pretrained(processor_name)
 
@@ -32,6 +32,7 @@ class CocoCaptionDataset(torch.utils.data.Dataset):
                 caption = random.choice(captions)
             else:
                 # for validation just check against the first caption
+                # also test set just has a dummy placeholder
                 caption = captions[0]
         else:
             caption = ""
