@@ -1,8 +1,9 @@
 ## Introduction
 This is a minimal implementation of the CLIP model proposed by OpenAI, using PyTorch. For all the gory 
 details: [Learning Transferable Visual Models From Natural Language 
-Supervision](https://arxiv.org/abs/2103.00020)  
-_TODO: Try the SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/pdf/2303.15343)_
+Supervision](https://arxiv.org/pdf/2103.00020)  
+Attention maps adapted for ViT by following: [Quantifying Attention Flow in Transformers]([https://arxiv.org/abs/2103.00020](https://arxiv.org/pdf/2005.00928)
+_TODO: Try the SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/pdf/2303.15343)_   
 
 ![clip_model](assets/clip_desc.png)
 
