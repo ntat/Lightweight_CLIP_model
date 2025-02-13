@@ -1,13 +1,17 @@
 import os
+import re
 import torch
 import random
 import datetime
+import torch.nn as nn
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from transformers import ViTImageProcessor
 from torch.utils.data import Dataset
+from tqdm import tqdm
+from PIL import Image
 
 # custom wrapper for coco
 class CocoCaptionDataset(torch.utils.data.Dataset):
@@ -28,7 +32,7 @@ class CocoCaptionDataset(torch.utils.data.Dataset):
         # mode selection
         if isinstance(captions, list) and len(captions) > 0:
             if self.mode == "train":
-                # we pick in random one of the 5 availble captions for training
+                # we pick in random one of the 5 availble captions for training (super important for better generalization!)
                 caption = random.choice(captions)
             else:
                 # for validation just check against the first caption
@@ -39,9 +43,8 @@ class CocoCaptionDataset(torch.utils.data.Dataset):
         
         return image["pixel_values"].squeeze(0), caption
 
-
 def get_parameter_groups(encoder):
-    # we r just gonna skip gains & biases from L2 regularization, as per clip
+    # we r just gonna skip gains & biases from L2 regularization, as per clip paper
     decay_params = []
     no_decay_params = []
     
@@ -56,7 +59,6 @@ def get_parameter_groups(encoder):
             decay_params.append(param)
     
     return decay_params, no_decay_params
-
 
 def make_image_from_mat(matrix, epoch):
     ct = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
@@ -75,10 +77,62 @@ def make_image_from_mat(matrix, epoch):
     plt.colorbar(label="Normalized Similarity")
 
     # save the sim matrix
-    save_path = os.path.join("/proj/berzelius-2024-205/nikos/res_pics", f'img_{ct}.png')
+    save_path = os.path.join("/cephyr/NOBACKUP/groups/naiss2024-6-186/nikos/res_pics", f'img_{ct}.png')
     plt.savefig(save_path)
     plt.close()
 
+def precompute_img_emb(encoder, dataloader, path):
+    ## extracts and saves img embeddings in smaller chunks
+    ## to the disk in case of low gpu mem
+    img_embeddings = []
+    idx = 1
+    encoder.eval()
+    with torch.no_grad():
+        for img, _ in tqdm(dataloader, desc="Extracting Image Embeddings..."):
+            img_embed = encoder(img)
+            img_embeddings.append(img_embed)
+            if idx % 5 == 0:
+                img_embeddings = torch.cat(img_embeddings, dim=0)
+                torch.save(img_embeddings, f'{path}test_set_img_{idx}.pt')
+                img_embeddings = []
+            idx+=1
+
+    if len(img_embeddings)>0: # left overs from dataloader
+        img_embeddings = torch.cat(img_embeddings, dim=0)
+        torch.save(img_embeddings, f'{path}test_set_img_{idx}.pt')
+
+def precompute_class_emb(encoder, path):
+    ## labels are very small (80 unique) / fit easily on mem
+    class_embed = []
+    labels = []
+    with open(path, 'r') as file:
+        for line in file:
+            labels.append(line.strip())
+    print (f'Total classes: {len(labels)}')
+
+    encoder.eval()
+    with torch.no_grad():
+        for txt in labels:
+            txt_embed = encoder(txt)
+            class_embed.append(txt_embed)
+
+    return torch.cat(class_embed, dim=0), labels
+
+def compute_query_embedding(encoder, query, device): # the text prompt
+    with torch.no_grad():
+        text_embedding = encoder(query)
+    return text_embedding
+
+def find_top_k_matches(precom_embbs, query_embedding, logit, k=5, device='cuda'):
+    # nroms for cos
+    query_embedding = nn.functional.normalize(query_embedding, p=2, dim=1).to(device)
+    precom_embbs = nn.functional.normalize(precom_embbs, p=2, dim=1).to(device)
+
+    similarities = torch.matmul(precom_embbs, query_embedding.T) * logit # logit must be in exponated
+    similarities = torch.nn.functional.softmax(similarities, dim=0) # turn it into pseudo probs
+    similarities = similarities.squeeze()
+    top_k_indices = similarities.topk(k).indices
+    return top_k_indices, similarities[top_k_indices]
 
 def load_model(checkpoint_path, encoder_1, encoder_2, device):
     checkpoint = torch.load(checkpoint_path, map_location=device)
@@ -92,7 +146,114 @@ def load_model(checkpoint_path, encoder_1, encoder_2, device):
     loss_state_dct = checkpoint['loss_state_dict']
     opt_state_dct = checkpoint['optimizer_state_dict']
     epoch = checkpoint['epoch']
-    loss = checkpoint['loss']
+    tr_loss = checkpoint['loss']
     vld_loss = checkpoint['vld_loss']
 
-    return encoder_1, encoder_2, opt_state_dct, loss_state_dct, epoch, loss, vld_loss
+    return encoder_1, encoder_2, opt_state_dct, loss_state_dct, epoch, tr_loss, vld_loss
+
+def numeric_sort(files):
+    return sorted(files, key=lambda x: int(re.search(r'(\d+)', x).group()))
+
+def load_embeddings(save_dir):
+    embeddings = []
+    files = [f for f in os.listdir(save_dir) if f.endswith(".pt")]
+    for file in numeric_sort(files):
+        print (file)
+        batch_embeddings = torch.load(os.path.join(save_dir, file))
+        embeddings.append(batch_embeddings)
+    return torch.cat(embeddings, dim=0)
+
+#### plotter functions
+
+def plot_images_and_attentions(images, attentions, title="Images retrieved for prompt"):
+    ## 1) resizes all images and attention maps (maps in PIL) to a fixed size of 224x224 
+    ## 2) plots the images in the first row and their attention map overlay in the second row
+    plt.close('all')
+    num_images = len(images)
+    
+    # resize images and attention maps to 224x224
+    target_size = (224, 224)
+    images_resized = [image.resize(target_size, Image.LANCZOS) for image in images]
+    attentions_resized = [attn.resize(target_size, Image.LANCZOS) for attn in attentions]
+
+    # convert resized images and attentions to numpy for plotting
+    images_resized = [np.array(image) for image in images_resized]
+    attentions_resized = [np.array(attn) for attn in attentions_resized]
+ 
+    fig, axes = plt.subplots(2, num_images, figsize=(num_images * 4 + 1, 10)) 
+
+    # plot orig images (1st row)
+    for j in range(num_images):
+        ax = axes[0, j]
+        ax.imshow(images_resized[j])
+        ax.axis('off')
+
+    # attention map overlays (2nd row)
+    attn_images = []
+    for j in range(num_images):
+        ax = axes[1, j]
+        ax.imshow(images_resized[j])
+        im = ax.imshow(attentions_resized[j], cmap="viridis", alpha=0.75)  # overlay
+        ax.axis('off')
+        attn_images.append(im)
+
+    # shared colorbar (last column)
+    cax = fig.add_axes([0.91, 0.2, 0.02, 0.6])  # manual colorbar positioning
+    cbar = fig.colorbar(attn_images[0], cax=cax, orientation='vertical')
+    cbar.set_label('Attention Intensity', fontsize=14, labelpad=15)
+    cbar.ax.tick_params(labelsize=12)
+
+    plt.subplots_adjust(hspace=0.001)
+    fig.suptitle(title, fontsize=24, y=0.85, va='bottom')
+    plt.savefig("output.png", bbox_inches='tight', pad_inches=0.2)
+    plt.show()
+
+def plot_images_and_bars(images, texts, probs, title="Zero Shot Classification on CoCo test2017"):
+    ## 1) resizes all images to a fixed size of 224x224
+    ## 2) plots images in the first row and barplots in the second row.
+    plt.close('all')
+    num_images = len(images)
+
+    # resize images to 224x224
+    target_size = (224, 224)
+    images_resized = [image.resize(target_size, Image.LANCZOS) for image in images]
+
+    # convert to numpy for plotting
+    images_resized = [np.array(image) for image in images_resized]
+    fig, axes = plt.subplots(2, num_images, figsize=(num_images * 4 + 1, 10))
+
+    # plot original images (1st row)
+    for j in range(num_images):
+        ax = axes[0, j]
+        ax.imshow(images_resized[j])
+        ax.axis('off')
+
+    # bar plots (2nd row)
+    bar_plots = []
+    for j in range(num_images):
+        ax = axes[1, j]
+        bar = ax.barh(texts[j][::-1], probs[j].flip(0).cpu(), color='skyblue')
+        bar_plots.append(bar)
+
+    # adjust the space between the rows 
+    plt.subplots_adjust(hspace=0.01) 
+    plt.tight_layout()
+
+    fig.suptitle(title, fontsize=24, y=0.94, va='bottom')
+    plt.savefig("zero_out.png", bbox_inches='tight', pad_inches=0.2)
+    plt.show()
+
+def plot_loss(train, vld):
+    epochs = list(range(1, len(train) + 1))
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train, label="Training Loss", marker='o')
+    plt.plot(epochs, vld, label="Validation Loss", marker='o', linestyle='--')
+    plt.title("Training and Validation Loss Over Epochs", fontsize=14)
+    plt.xlabel("Epochs", fontsize=12)
+    plt.ylabel("Loss", fontsize=12)
+    plt.xticks(fontsize=10)
+    plt.yticks(fontsize=10)
+    plt.legend(fontsize=12)
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.show()

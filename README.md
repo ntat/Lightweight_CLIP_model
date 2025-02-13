@@ -3,7 +3,7 @@ This is a minimal implementation of the CLIP model proposed by OpenAI, using PyT
 details: [Learning Transferable Visual Models From Natural Language 
 Supervision](https://arxiv.org/pdf/2103.00020)  
 Attention maps adapted for ViT by following: [Quantifying Attention Flow in Transformers](https://arxiv.org/pdf/2005.00928)  
-_TODO: Try the SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/pdf/2303.15343)_   
+_SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/pdf/2303.15343)_🚧   
 
 ![clip_model](assets/clip_desc.png)
 
@@ -16,17 +16,16 @@ for text, as our transformer encoders for feature extraction). This method can b
 modalities such as speech and text.
 
 CLIP is capable of:
-- **Zero-shot classification:** Predicting the category of an image without any task-specific training.
-- **Text-to-Image Retrieval:** Finding relevant images based on a text query.
-- **Image-to-Text Retrieval:** Searching for descriptive text based on an image.
+- **Zero-shot classification:** Predicting the category of an image without any task-specific training. ✅
+- **Text-to-Image Retrieval:** Finding relevant images based on a text query. ✅
+- **Image-to-Text Retrieval:** Searching for descriptive text based on an image. 🚧
 
 For this particular project we look into two training schemes:
 - **Projection Layer training only** This requires to pre-extract image and text embeddings and then train 
 the projection layers on these embeddings (Very fast training and solid results, only bottleneck is 
 embedding extraction).
 - **Train everything** (ie backpropagate gradients back to the transformers), this is slower - depends on 
-your 
-hardware, but yields best results.  
+your hardware, but yields best results.  
 
 ## General Requirements
 - `Python >= 3.8`
