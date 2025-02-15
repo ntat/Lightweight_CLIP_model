@@ -9,6 +9,7 @@ import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
 
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from transformers import ViTImageProcessor
 from torch.utils.data import Dataset
 from tqdm import tqdm
@@ -76,10 +77,12 @@ class MatrixVisualizer:
         else:
             matrix_norm = (matrix_norm - min_val) / (max_val - min_val) # norm to (0-1 range)
 
-        plt.figure(figsize=(8, 8))
-        plt.imshow(matrix_norm, cmap="viridis", interpolation="none")
-        plt.title(f'Epoch = {epoch}')
-        plt.colorbar(label="Normalized Similarity. Iteration:{current_iteration}")
+        fig, ax = plt.subplots()
+        im = ax.imshow(matrix_norm, cmap="viridis", interpolation="none")
+        ax.set_title(f'Iteration: {current_iteration}')
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes('right', size='5%', pad=0.1)
+        cbar = fig.colorbar(im, cax=cax, label=f'Normalized Similarity - Iteration:{current_iteration}')
 
         save_path = os.path.join(self.__save_dir, f'img_{current_iteration:09d}_{ct}.png')
         plt.savefig(save_path)

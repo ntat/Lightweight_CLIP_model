@@ -63,12 +63,12 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
     iters = len(dataloader)
     iteration_counter = count(start=0)
     check_vld = True
-    plt_pics = False
-    tr_store = [] 
+    plt_pics = True
+    tr_store = []
     vld_store = []
     output_dir = config['paths']['output_dir']
 
-    visualizer = MatrixVisualizer(config['paths']['mat_similarity_plots'], (num_epochs-start_epoch)*iters, plot_percentage=10)
+    visualizer = MatrixVisualizer(config['paths']['mat_similarity_plots'], (num_epochs-start_epoch)*iters, percentage=5)
 
     for epoch in range(start_epoch, num_epochs):
         encoder_1.train()
@@ -83,7 +83,7 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
             img_embeddings = encoder_1(img)
             text_embeddings = encoder_2(text)
 
-            loss, sim_mtx = criterion(img_embeddings, text_embeddings)
+            loss, similarity_matrix = criterion(img_embeddings, text_embeddings)
             accelerator.backward(loss)
 
             #accelerator.clip_grad_norm_(encoder_1.parameters(), 1.0)
