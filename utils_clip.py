@@ -1,5 +1,6 @@
 import os
 import re
+import yaml
 import torch
 import random
 import datetime
@@ -43,6 +44,52 @@ class CocoCaptionDataset(torch.utils.data.Dataset):
         
         return image["pixel_values"].squeeze(0), caption
 
+class MatrixVisualizer:
+    def __init__(self, save_dir, total_iterations, percentage=5):
+        ## handles the ploting of similarity matrixes at a predefined set of training steps
+        ## we always include 1st and last step, percentage should be (0 < percentage <= 100)
+        ## if all steps needed --> percentage=100 (not recommended)
+        self.__save_dir = save_dir
+        os.makedirs(self.__save_dir, exist_ok=True)
+        self.__total_iterations = total_iterations
+        self.__percentage = percentage
+        self.__plot_indices = self.__calculate_plot_indices()
+
+    def __calculate_plot_indices(self):
+        ## pre-calculates which indexes should triger a matrix plot
+        ## based on percentage of total iterations.
+        num_plots = max(2, int(round(self.__total_iterations * (self.__percentage / 100.0))))
+        indices = np.linspace(0, self.__total_iterations - 1, num=num_plots, dtype=int)
+        unique_indices = sorted(set(indices)) # just in case of duplicates ie very small iters
+        return unique_indices
+
+    def should_plot(self, current_iteration): 
+        return current_iteration in self.__plot_indices
+
+    def plot_matrix(self, matrix, current_iteration):
+        ct = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
+        matrix_norm = matrix.detach().cpu().numpy()
+        min_val, max_val = matrix_norm.min(), matrix_norm.max()
+
+        if min_val == max_val:
+            matrix_norm = np.zeros_like(matrix_norm) # just in case of a 0 div
+        else:
+            matrix_norm = (matrix_norm - min_val) / (max_val - min_val) # norm to (0-1 range)
+
+        plt.figure(figsize=(8, 8))
+        plt.imshow(matrix_norm, cmap="viridis", interpolation="none")
+        plt.title(f'Epoch = {epoch}')
+        plt.colorbar(label="Normalized Similarity. Iteration:{current_iteration}")
+
+        save_path = os.path.join(self.__save_dir, f'img_{current_iteration:09d}_{ct}.png')
+        plt.savefig(save_path)
+        plt.close()
+
+def load_config(config_path='config.yaml'):
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    return config
+
 def get_parameter_groups(encoder):
     # we r just gonna skip gains & biases from L2 regularization, as per clip paper
     decay_params = []
@@ -59,27 +106,6 @@ def get_parameter_groups(encoder):
             decay_params.append(param)
     
     return decay_params, no_decay_params
-
-def make_image_from_mat(matrix, epoch):
-    ct = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
-
-    matrix_norm = matrix.detach().cpu().numpy()
-    min_val, max_val = matrix_norm.min(), matrix_norm.max()
-
-    if min_val == max_val:
-        matrix_norm = np.zeros_like(matrix_norm)  # just in case of a 0 div
-    else:
-        matrix_norm = (matrix_norm - min_val) / (max_val - min_val)  # norm to (0-1 range)
-
-    plt.figure(figsize=(8, 8))
-    plt.imshow(matrix_norm, cmap="viridis", interpolation="none")
-    plt.title(f'Epoch = {epoch}')
-    plt.colorbar(label="Normalized Similarity")
-
-    # save the sim matrix
-    save_path = os.path.join("/cephyr/NOBACKUP/groups/naiss2024-6-186/nikos/res_pics", f'img_{ct}.png')
-    plt.savefig(save_path)
-    plt.close()
 
 def precompute_img_emb(encoder, dataloader, path):
     ## extracts and saves img embeddings in smaller chunks
@@ -143,13 +169,14 @@ def load_model(checkpoint_path, encoder_1, encoder_2, device):
     encoder_1.load_state_dict(checkpoint['encoder_1'])
     encoder_2.load_state_dict(checkpoint['encoder_2'])
 
-    loss_state_dct = checkpoint['loss_state_dict']
     opt_state_dct = checkpoint['optimizer_state_dict']
+    sch_state_dct = checkpoint['scheduler_state_dict']
+    loss_state_dct = checkpoint['loss_state_dict']
     epoch = checkpoint['epoch']
-    tr_loss = checkpoint['loss']
+    tr_loss = checkpoint['tr_loss']
     vld_loss = checkpoint['vld_loss']
 
-    return encoder_1, encoder_2, opt_state_dct, loss_state_dct, epoch, tr_loss, vld_loss
+    return encoder_1, encoder_2, opt_state_dct, sch_state_dct, loss_state_dct, epoch, tr_loss, vld_loss
 
 def numeric_sort(files):
     return sorted(files, key=lambda x: int(re.search(r'(\d+)', x).group()))

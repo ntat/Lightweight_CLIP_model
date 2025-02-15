@@ -7,19 +7,21 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 
 from accelerate import Accelerator
+from itertools import count
 
 from encoder_models import *
 from loss_functions import *
 from utils_clip import *
 
-# from tqdm import tqdm
-
-
-def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rates, device, accelerator, resume_training = False):
+def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rates, device, accelerator, config, resume_training = False):
 
     if resume_training:
-        checkpoint_path ='/cephyr/NOBACKUP/groups/naiss2024-6-186/nikos/modelSaveFull_32WLux_Cos2_clip_rand_clmp_proj/model_epoch_5.pt' ## todo: put this somewhere else
-        encoder_1, encoder_2, opt_state_dct, loss_state_dct, epoch_load, loss, vld_loss = load_model(checkpoint_path, encoder_1, encoder_2, device)
+        checkpoint_path = config['paths']['checkpoint']
+        encoder_1, encoder_2, opt_state_dct, sch_state_dct, loss_state_dct, epoch_load, _, _ = load_model(checkpoint_path, encoder_1, encoder_2, device)
+        start_epoch = epoch_load+1
+    else:
+        epoch_load = 0
+        start_epoch = 0
 
 
     image_decay, image_no_decay = get_parameter_groups(encoder_1)
@@ -39,51 +41,53 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
 
     ]
 
-    # print(f"Un restored logit_scale: {criterion.logit_scale.item()}")
-
     optimizer = optim.AdamW(
         optimizer_groups,
         betas=(0.9, 0.98)  # clip-style momentum
     )
 
+    scheduler = CosineAnnealingWarmRestarts(optimizer, 1, 2)
+
     if resume_training:
         optimizer.load_state_dict(opt_state_dct)
+        scheduler.load_state_dict(sch_state_dct)
         criterion.load_state_dict(loss_state_dct)
-        start_epoch = epoch_load
-    else:
-        start_epoch = 0
 
-    scheduler = CosineAnnealingWarmRestarts(optimizer, 1, 2)
-    iters = len(dataloader)
     print (f'Starting from Epoch: {start_epoch}')
-    # print(f"Restored logit_scale: {criterion.logit_scale.item()}")
-
 
     # for multi node / multi gpu object prep
     dataloader, encoder_1, encoder_2, optimizer, scheduler = accelerator.prepare(dataloader,  encoder_1, encoder_2, optimizer, scheduler)
 
 
-    num_epochs = 31
+    num_epochs = epoch_load+31
+    iters = len(dataloader)
+    iteration_counter = count(start=0)
     check_vld = True
-    ls_store = []
-    vld_store = []
     plt_pics = False
-    output_dir = '/cephyr/NOBACKUP/groups/naiss2024-6-186/nikos/modelSaveFull_32WLux_Cos2_clip_rand_clmp_proj/'
+    tr_store = [] 
+    vld_store = []
+    output_dir = config['paths']['output_dir']
+
+    visualizer = MatrixVisualizer(config['paths']['mat_similarity_plots'], (num_epochs-start_epoch)*iters, plot_percentage=10)
 
     for epoch in range(start_epoch, num_epochs):
         encoder_1.train()
         encoder_2.train()
         total_loss = 0.0
         num_batches = 0
-        for img, text in dataloader: #tqdm(dataloader, desc="Processing Images", total=len(dataloader)):
+        for img, text in dataloader:
 
+            current_iteration = next(iteration_counter)
             optimizer.zero_grad()
 
             img_embeddings = encoder_1(img)
             text_embeddings = encoder_2(text)
 
-            loss = criterion(img_embeddings, text_embeddings, epoch, plt_pics)
+            loss, sim_mtx = criterion(img_embeddings, text_embeddings)
             accelerator.backward(loss)
+
+            #accelerator.clip_grad_norm_(encoder_1.parameters(), 1.0)
+            #accelerator.clip_grad_norm_(encoder_2.parameters(), 1.0)
 
             optimizer.step()
 
@@ -92,14 +96,14 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
 
             scheduler.step(epoch + num_batches / iters)
 
-    #        accelerator.clip_grad_norm_(encoder_1.parameters(), 1.0)
-    #        accelerator.clip_grad_norm_(encoder_2.parameters(), 1.0)
+            if accelerator.is_main_process and plt_pics and visualizer.should_plot(current_iteration):
+                visualizer.plot_matrix(similarity_matrix, current_iteration)
 
             total_loss += loss.item()
             num_batches += 1
 
         avg_loss = total_loss / num_batches
-        ls_store.append(avg_loss)
+        tr_store.append(avg_loss)
         accelerator.print(f'Epoch [{epoch+1}/{num_epochs}], Average Loss: {avg_loss:.10f}, Temperature: {criterion.logit_scale}')
 
         if check_vld: #accelerator.is_main_process:
@@ -108,11 +112,10 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
             total_valid_loss = 0.0
             num_batches_vld = 0
             with torch.no_grad():
-                for tst_img1, tst_txt2 in validloader:
-                    tst_img1 = tst_img1.to(device)
-                    img1_embeddings_tst = encoder_1(tst_img1)
-                    txt2_embeddings_tst = encoder_2(tst_txt2)
-                    valid_loss = criterion(img1_embeddings_tst, txt2_embeddings_tst, epoch, plt_pics) # over all items in tst
+                for vld_img, vld_txt in validloader:
+                    img_embeddings_vld = encoder_1(vld_img)
+                    txt_embeddings_vld = encoder_2(vld_txt)
+                    valid_loss, _ = criterion(img_embeddings_vld, txt_embeddings_vld) # over all items in tst
                     total_valid_loss += valid_loss.item()
                     num_batches_vld += 1
 
@@ -125,12 +128,13 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
             if accelerator.is_main_process:
                    save_path = f"{output_dir}/model_epoch_{epoch}.pt"
                    torch.save({
-                        'epoch': epoch,
-                        'loss_state_dict': criterion.state_dict(),
                         'encoder_1': encoder_1.state_dict(),
                         'encoder_2': encoder_2.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
-                        'loss': ls_store,
+                        'scheduler_state_dict': scheduler.state_dict(),
+                        'loss_state_dict': criterion.state_dict(),
+                        'epoch': epoch,
+                        'tr_loss': tr_store,
                         'vld_loss': vld_store,
                          }, save_path)
 
@@ -142,16 +146,17 @@ def main():
     accelerator = Accelerator()
     device = accelerator.device
 
-    ## DATA
+    config = load_config()
 
+    ## CoCo dataset
     coco_dataset_tr = dset.CocoCaptions(
-        root='/cephyr/NOBACKUP/groups/naiss2024-6-186/nikos/train2017',
-        annFile='/mimer/NOBACKUP/groups/snic2022-6-127/nikos/ViTClip/coco/annotations/captions_train2017.json'
+        root=config['data']['train_root'],
+        annFile=config['data']['train_ann']
     )
 
     coco_dataset_val = dset.CocoCaptions(
-        root='/mimer/NOBACKUP/groups/snic2022-6-127/nikos/ViTClip/coco/val2017',
-        annFile='/mimer/NOBACKUP/groups/snic2022-6-127/nikos/ViTClip/coco/annotations/captions_val2017.json'
+        root=config['data']['val_root'],
+        annFile=config['data']['val_ann']
     )
 
     train_dataset = CocoCaptionDataset(coco_dataset_tr, mode="train")
@@ -164,7 +169,7 @@ def main():
     ## Model hypers
 
     embed_dim = 128
-    criterion = ContrastiveLoss(device, temperature_init=0.07)
+    criterion = ContrastiveLoss(temperature_init=0.07, device=device)
     criterion = criterion.to(device)
 
     vit_trans_name = "google/vit-base-patch16-224"
@@ -184,7 +189,7 @@ def main():
     resume_training = False
 
     # just rain the model
-    train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rates, device, accelerator, resume_training)
+    train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rates, device, accelerator, config, resume_training)
 
 
 if __name__ == '__main__':
