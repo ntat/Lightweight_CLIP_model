@@ -28,6 +28,34 @@ CLIP is capable of:
 - **Text-to-Image Retrieval:** Finding relevant images based on a text query. ✅
 - **Image-to-Text Retrieval:** Searching for descriptive text based on an image. (🚧 todo: find test set descriptions)   
 
+
+# Results
+
+## Text-to-Image Retrieval
+<div align="center">
+  <figure>
+    <img src="assets/airplanes1.png" width="600">
+  </figure>
+
+  <figure>
+    <img src="assets/airplanes2.png" width="600">
+  </figure>
+</div>
+
+---
+
+## Zero-shot classification
+<div align="center">
+  <figure>
+    <img src="assets/zero_out_6.png" width="600">
+  </figure>
+
+  <figure>
+    <img src="assets/zero_out_10.png" width="600">
+  </figure>
+</div>
+
+   
 ## General Requirements
 - `Python >= 3.8`
 - `Accelerate`
