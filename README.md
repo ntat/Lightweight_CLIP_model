@@ -34,11 +34,11 @@ CLIP is capable of:
 ## Text-to-Image Retrieval
 <div align="center">
   <figure>
-    <img src="assets/airplanes1.png" width="600">
+    <img src="retrieval_result_pics/airplanes1.png" width="600">
   </figure>
 
   <figure>
-    <img src="assets/airplanes2.png" width="600">
+    <img src="retrieval_result_pics/airplanes2.png" width="600">
   </figure>
 </div>
 
@@ -47,11 +47,11 @@ CLIP is capable of:
 ## Zero-shot classification
 <div align="center">
   <figure>
-    <img src="assets/zero_out_6.png" width="600">
+    <img src="zero_shot_classification_results/zero_out_6.png" width="600">
   </figure>
 
   <figure>
-    <img src="assets/zero_out_10.png" width="600">
+    <img src="zero_shot_classification_results/zero_out_10.png" width="600">
   </figure>
 </div>
 
