@@ -15,6 +15,13 @@ allowing it to generalize across different features it has seen (here we use ViT
 for text, as our transformer encoders for feature extraction). This method can be extended to other 
 modalities such as speech and text.
 
+
+<figure>
+  <img src="assets/matrix.gif" alt="Similarity Matrix progress">
+  <figcaption>Similarity Matrix progress (from different batches).</figcaption>
+</figure>
+
+
 CLIP is capable of:
 - **Zero-shot classification:** Predicting the category of an image without any task-specific training. ✅
 - **Text-to-Image Retrieval:** Finding relevant images based on a text query. ✅
@@ -29,12 +36,13 @@ your hardware, but yields best results.
 
 ## General Requirements
 - `Python >= 3.8`
+- `Accelerate`
 - `PyTorch`
 - `Transformers`
 - `NumPy`
 - `Matplotlib` 
-- Other libraries: `tqdm`, `PIL`, `scikit-learn`, `torchvision`
-- Dataset used: `MS-COCO-17`
+- Other libraries: `tqdm`, `PIL`, `torchvision`
+- - Dataset used: [`MS-COCO-17`](https://cocodataset.org/#download)
 
 full project requirements can be installed via pip:
 ```bash
