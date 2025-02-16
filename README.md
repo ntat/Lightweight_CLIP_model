@@ -3,27 +3,27 @@ This is a minimal implementation of the CLIP model proposed by OpenAI, using PyT
 details: [Learning Transferable Visual Models From Natural Language 
 Supervision](https://arxiv.org/pdf/2103.00020)  
 Attention maps adapted for ViT by following: [Quantifying Attention Flow in Transformers](https://arxiv.org/pdf/2005.00928)  
-_SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/pdf/2303.15343)_🚧   
+_SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/pdf/2303.15343)🚧_      
 
-![clip_model](assets/clip_desc.png)
+![clip_model](assets/clip_desc.png)   
 
 
-The main idea behind CLIP is to map different modalities (e.g. images and their corresponding captions) into a common vector space. By doing so, the model learns to align _semantically_ similar pairs (e.g. an image and its _accurate_ description) while pushing away those that don’t match. This alignment is achieved by using a similarity matrix: the diagonal elements (representing matching pairs) are being forced via the loss function to have high similarity, while off-diagonal elements (representing non-matching pairs) are forced to have low similarity. (See animation below for a visual explanation.)
+The main idea behind CLIP is to map different modalities (e.g. images and their corresponding captions) into a common vector space. By doing so, the model learns to align _semantically_ similar pairs (e.g. an image and its _accurate_ description) while pushing away those that don’t match. This alignment is achieved by using a similarity matrix: the diagonal elements (representing matching pairs) are being forced via the loss function to have high similarity, while off-diagonal elements (representing non-matching pairs) are forced to have low similarity. (See animation below for a visual explanation.)   
 
 <div align="center">
   <figure>
     <img src="assets/matrix.gif" alt="Similarity Matrix progress">
-    <figcaption>Similarity Matrix progress (from different batches).</figcaption>
+    <figcaption>Similarity Matrix progress (from different batches).  </figcaption>
   </figure>
 </div>
-
+   
 Practically speaking, CLIP leverages the rich representational power of transformers to capture the underlying semantics of each modality. In this implementation, I use a Vision Transformer (ViT) for processing images and a BERT-uncased model for handling text. Together with the similarity matrix, these transformer encoders allow the model to generalize across diverse features. This method isn’t limited to images and text, it can be extended to other modalities, such as speech paired with text.  
 
 This model can be trained as follows:
-- **Projection Layer training only** This requires to pre-extract image and text embeddings and then train 
+- **Projection Layer training only:** This requires to pre-extract image and text embeddings and then train 
 small projection layers on these embeddings (Very fast training and ok results, only bottleneck is 
 embedding extraction, not covered here).
-- **Train everything** This is our focus here in this project (ie backpropagate gradients to the transformers in a fine tuning fashion), this is slower - depends on 
+- **Train everything:** This is our focus here in this project (ie backpropagate gradients to the transformers in a fine tuning fashion), this is slower - depends on 
 your hardware, but yields best results.   
 
 CLIP is capable of:
