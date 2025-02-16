@@ -10,11 +10,9 @@ _SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.
 
 The main idea behind CLIP is to map different modalities (e.g. images and their corresponding captions) into a common vector space. By doing so, the model learns to align _semantically_ similar pairs (e.g. an image and its _accurate_ description) while pushing away those that don’t match. This alignment is achieved by using a similarity matrix: the diagonal elements (representing matching pairs) are being forced via the loss function to have high similarity, while off-diagonal elements (representing non-matching pairs) are forced to have low similarity. (See animation below for a visual explanation.)   
 
-<center>
+<div align="center">
   <img src="assets/matrix.gif">
-  <br>
-  <sub>Similarity Matrix progress (from different batches).</sub>
-</center>
+</div>
    
 Practically speaking, CLIP leverages the rich representational power of transformers to capture the underlying semantics of each modality. In this implementation, I use a Vision Transformer (ViT) for processing images and a BERT-uncased model for handling text. Together with the similarity matrix, these transformer encoders allow the model to generalize across diverse features. This method isn’t limited to images and text, it can be extended to other modalities, such as speech paired with text.  
 
