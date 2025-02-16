@@ -8,41 +8,39 @@ _SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.
 ![clip_model](assets/clip_desc.png)
 
 
-The idea of CLIP is basically to map two different modalities that describe similar things (ie an image and 
-its caption) into a shared vector space. Practically speaking, the model leverages the very rich descriptive 
-power of transformers in order to make sense of how an image and its corresponding text align together, 
-allowing it to generalize across different features it has seen (here we use ViT for pics and bert-uncased 
-for text, as our transformer encoders for feature extraction). This method can be extended to other 
-modalities such as speech and text.
+The main idea behind CLIP is to map different modalities (e.g. images and their corresponding captions) into a common vector space. By doing so, the model learns to align _semantically_ similar pairs (e.g. an image and its _accurate_ description) while pushing away those that don’t match. This alignment is achieved by using a similarity matrix: the diagonal elements (representing matching pairs) are being forced via the loss function to have high similarity, while off-diagonal elements (representing non-matching pairs) are forced to have low similarity. (See animation below for a visual explanation.)
 
+<div align="center">
+  <figure>
+    <img src="assets/matrix.gif" alt="Similarity Matrix progress">
+    <figcaption>Similarity Matrix progress (from different batches).</figcaption>
+  </figure>
+</div>
 
-<figure>
-  <img src="assets/matrix.gif" alt="Similarity Matrix progress">
-  <figcaption>Similarity Matrix progress (from different batches).</figcaption>
-</figure>
+Practically speaking, CLIP leverages the rich representational power of transformers to capture the underlying semantics of each modality. In this implementation, I use a Vision Transformer (ViT) for processing images and a BERT-uncased model for handling text. Together with the similarity matrix, these transformer encoders allow the model to generalize across diverse features. This method isn’t limited to images and text, it can be extended to other modalities, such as speech paired with text.  
 
+This model can be trained as follows:
+- **Projection Layer training only** This requires to pre-extract image and text embeddings and then train 
+small projection layers on these embeddings (Very fast training and ok results, only bottleneck is 
+embedding extraction, not covered here).
+- **Train everything** This is our focus here in this project (ie backpropagate gradients to the transformers in a fine tuning fashion), this is slower - depends on 
+your hardware, but yields best results.   
 
 CLIP is capable of:
 - **Zero-shot classification:** Predicting the category of an image without any task-specific training. ✅
 - **Text-to-Image Retrieval:** Finding relevant images based on a text query. ✅
-- **Image-to-Text Retrieval:** Searching for descriptive text based on an image. 🚧
-
-For this particular project we look into two training schemes:
-- **Projection Layer training only** This requires to pre-extract image and text embeddings and then train 
-the projection layers on these embeddings (Very fast training and solid results, only bottleneck is 
-embedding extraction).
-- **Train everything** (ie backpropagate gradients back to the transformers), this is slower - depends on 
-your hardware, but yields best results.  
+- **Image-to-Text Retrieval:** Searching for descriptive text based on an image. (🚧 todo: find test set descriptions)   
 
 ## General Requirements
 - `Python >= 3.8`
 - `Accelerate`
 - `PyTorch`
+- `Torchvision`
 - `Transformers`
 - `NumPy`
 - `Matplotlib` 
-- Other libraries: `tqdm`, `PIL`, `torchvision`
-- - Dataset used: [`MS-COCO-17`](https://cocodataset.org/#download)
+- Other libraries: `tqdm`, `PIL`, `PyYAML`
+- Dataset used: [`MS-COCO-17`](https://cocodataset.org/#download)
 
 full project requirements can be installed via pip:
 ```bash
