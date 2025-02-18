@@ -40,17 +40,14 @@ CLIP is capable of:
   <figure>
     <img src="retrieval_result_pics/airplanes2.png" width="600">
   </figure>
-</div>
 
   <figure>
     <img src="retrieval_result_pics/baseball_people.png" width="600">
   </figure>
-</div>
 
   <figure>
     <img src="retrieval_result_pics/dogs_outdoors.png" width="600">
   </figure>
-</div>
 
   <figure>
     <img src="retrieval_result_pics/descriptive_people.png" width="600">
@@ -68,17 +65,14 @@ CLIP is capable of:
   <figure>
     <img src="zero_shot_classification_results/zero_out_10.png" width="600">
   </figure>
-</div>
 
   <figure>
     <img src="zero_shot_classification_results/zero_out4.png" width="600">
   </figure>
-</div>
 
   <figure>
     <img src="zero_shot_classification_results/zero_out_2.png" width="600">
   </figure>
-</div>
 
   <figure>
     <img src="zero_shot_classification_results/zero_out_8.png" width="600">
