@@ -30,8 +30,8 @@ CLIP is capable of:
 
 
 # Results
-Top-5 retrieved. More results in `retrieval_result_pics` folder.
 ## Text-to-Image Retrieval
+Top-5 retrieved. More results in `retrieval_result_pics` folder.
 <div align="center">
   <figure>
     <img src="retrieval_result_pics/airplanes1.png" width="600">
