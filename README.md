@@ -30,7 +30,7 @@ CLIP is capable of:
 
 
 # Results
-
+Top-5 retrieved. More results in `retrieval_result_pics` folder.
 ## Text-to-Image Retrieval
 <div align="center">
   <figure>
@@ -57,6 +57,7 @@ CLIP is capable of:
 ---
 
 ## Zero-shot classification
+5 pictures picked at random from test data. More results in `zero_shot_classification_results` folder.
 <div align="center">
   <figure>
     <img src="zero_shot_classification_results/zero_out_6.png" width="600">
