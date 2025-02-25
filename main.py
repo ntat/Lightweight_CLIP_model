@@ -6,6 +6,7 @@ import torchvision.datasets as dset
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 
+from accelerate import DistributedDataParallelKwargs
 from accelerate import Accelerator
 from itertools import count
 
@@ -53,7 +54,7 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
         scheduler.load_state_dict(sch_state_dct)
         criterion.load_state_dict(loss_state_dct)
 
-    print (f'Starting from Epoch: {start_epoch}')
+    accelerator.print (f'Starting from Epoch: {start_epoch}')
 
     # for multi node / multi gpu object prep
     dataloader, encoder_1, encoder_2, optimizer, scheduler = accelerator.prepare(dataloader,  encoder_1, encoder_2, optimizer, scheduler)
@@ -138,12 +139,12 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
                         'vld_loss': vld_store,
                          }, save_path)
 
-    print ("finished")
+    accelerator.print ("finished")
     return 0
 
 def main():
 
-    accelerator = Accelerator()
+    accelerator = Accelerator(kwargs_handlers=[DistributedDataParallelKwargs(find_unused_parameters=True)])
     device = accelerator.device
 
     config = load_config()
