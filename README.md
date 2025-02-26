@@ -29,6 +29,41 @@ CLIP is capable of:
 - **Image-to-Text Retrieval:** Searching for descriptive text based on an image. (🚧 todo: find test set descriptions)   
 
 
+## General Requirements
+- `Python >= 3.8`
+- `Accelerate`
+- `PyTorch`
+- `Torchvision`
+- `Transformers`
+- `NumPy`
+- `Matplotlib` 
+- Other libraries: `tqdm`, `PIL`, `PyYAML`
+- Dataset used: [`MS-COCO-17`](https://cocodataset.org/#download)
+- CoCo labels used for Zero-Shot: [`coco-labels`](https://github.com/amikelive/coco-labels/tree/master)
+
+## Installation & Usage
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ntat/Lightweight_CLIP_model.git
+   ```
+2. Install dependencies via `pip`:
+   ```bash 
+   pip install -r requirements.txt
+   ```
+3. Download the dataset and adapt the paths in `config.yaml` 
+4. If you have access to only one GPU, run the script with `python`:
+   ```bash 
+   python main.py
+   ```
+   - If you have access to multiple GPUs, run the script with `accelerate`, specifying the number of processes `<N>`:
+ - ```bash 
+   accelerate launch --num_processes <N> main.py
+   ```
+   - If you have access to SLURM with multiple nodes and multiple GPUs adapt the `multi_node.sh`script to your cluster's config and run it as follows:
+ - ```bash 
+   SLURM todo
+   ```
 # Results
 ## Text-to-Image Retrieval
 Top-5 retrieved. More results in `retrieval_result_pics` folder.
@@ -79,20 +114,3 @@ Top-5 retrieved. More results in `retrieval_result_pics` folder.
     <img src="zero_shot_classification_results/zero_out_8.png" width="600">
   </figure>
 </div>
-
-   
-## General Requirements
-- `Python >= 3.8`
-- `Accelerate`
-- `PyTorch`
-- `Torchvision`
-- `Transformers`
-- `NumPy`
-- `Matplotlib` 
-- Other libraries: `tqdm`, `PIL`, `PyYAML`
-- Dataset used: [`MS-COCO-17`](https://cocodataset.org/#download)
-- CoCo labels used for Zero-Shot: [`coco-labels`](https://github.com/amikelive/coco-labels/tree/master)
-
-full project requirements can be installed via pip:
-```bash
-pip install -r requirements.txt
