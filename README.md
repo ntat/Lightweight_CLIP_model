@@ -62,7 +62,7 @@ CLIP is capable of:
    ```
 - If you have access to SLURM with multiple nodes and multiple GPUs adapt the `multi_node.sh`script to your cluster's config and run it as follows:
   ```bash 
-   SLURM todo
+   sbatch multi_node.sh
    ```
 # Results
 ## Text-to-Image Retrieval
