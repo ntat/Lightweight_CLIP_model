@@ -64,6 +64,8 @@ CLIP is capable of:
   ```bash 
    sbatch multi_node.sh
    ```
+5. For inference, look into the `notebooks` section to see how to interact with the code. 
+
 # Results
 ## Text-to-Image Retrieval
 Top-5 retrieved. More results in `retrieval_result_pics` folder.
@@ -114,3 +116,7 @@ Top-5 retrieved. More results in `retrieval_result_pics` folder.
     <img src="zero_shot_classification_results/zero_out_8.png" width="600">
   </figure>
 </div>
+
+# Q&A
+
+
