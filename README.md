@@ -117,6 +117,10 @@ Top-5 retrieved. More results in `retrieval_result_pics` folder.
   </figure>
 </div>
 
-# Q&A
+# Discussion
+- What is lightweight about this?  
+-- With the current setup (batch=32, projection layer=128) it can be trained in a few hours in a modern GPU with with 10-12GB of vram and still get solid results. And, it scales near linearly the more GPU compute is added.
+ - What worked best?  
+ -- 1) Using all available captions per training image, 2) Scheduling with Cosine Annealing Warm Restarts [in the (1,2) setting](assets/cos_warm_res.png), 3) Not decaying gains or biases. With this priority: 1) >> 2) > 3) - Data is the king!
 
 

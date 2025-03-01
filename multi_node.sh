@@ -4,6 +4,7 @@
 #SBATCH --nodes=2
 #SBATCH --gres=gpu:A40:4
 #SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=64
 #SBATCH --time=01:00:00
 
 # Activate your environment
