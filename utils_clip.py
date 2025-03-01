@@ -122,13 +122,13 @@ def precompute_img_emb(encoder, dataloader, path):
             img_embeddings.append(img_embed)
             if idx % 5 == 0:
                 img_embeddings = torch.cat(img_embeddings, dim=0)
-                torch.save(img_embeddings, f'{path}test_set_img_{idx}.pt')
+                torch.save(img_embeddings, os.path.join(path, f'test_set_img_{idx}.pt'))
                 img_embeddings = []
             idx+=1
 
     if len(img_embeddings)>0: # left overs from dataloader
         img_embeddings = torch.cat(img_embeddings, dim=0)
-        torch.save(img_embeddings, f'{path}test_set_img_{idx}.pt')
+        torch.save(img_embeddings, os.path.join(path, f'test_set_img_{idx}.pt'))
 
 def precompute_class_emb(encoder, path):
     ## labels are very small (80 unique) / fit easily on mem

@@ -1,0 +1,14 @@
+data:
+  train_root: "/nvme0/data/coco/train2017"
+  train_ann: "/nvme0/data/coco/captions_train2017.json"
+  val_root: "/nvme0/data/coco/val2017"
+  val_ann: "/nvme0/data/coco/captions_val2017.json"
+  test_root: "/nvme0/data/coco/test2017"
+  test_ann: "/nvme0/data/coco/image_info_test2017.json"
+
+paths:
+  checkpoint: "/nvme1/models/clip/model_epoch_30.pt"
+  output_dir: "/nvme1/models/clip"
+  mat_similarity_plots: "/nvme1/temp/sim_plots"
+  img_embedd: "/nvme1/temp/img"
+  coco_classes: "/nvme0/data/coco/coco_classes.txt"

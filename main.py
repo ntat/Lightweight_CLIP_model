@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.optim as optim
 
@@ -127,17 +128,17 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
             accelerator.wait_for_everyone()
 
             if accelerator.is_main_process:
-                   save_path = f"{output_dir}/model_epoch_{epoch}.pt"
-                   torch.save({
-                        'encoder_1': encoder_1.state_dict(),
-                        'encoder_2': encoder_2.state_dict(),
-                        'optimizer_state_dict': optimizer.state_dict(),
-                        'scheduler_state_dict': scheduler.state_dict(),
-                        'loss_state_dict': criterion.state_dict(),
-                        'epoch': epoch,
-                        'tr_loss': tr_store,
-                        'vld_loss': vld_store,
-                         }, save_path)
+                save_path = os.path.join(output_dir, f"model_epoch_{epoch}.pt")
+                torch.save({
+                    'encoder_1': encoder_1.state_dict(),
+                    'encoder_2': encoder_2.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'scheduler_state_dict': scheduler.state_dict(),
+                    'loss_state_dict': criterion.state_dict(),
+                    'epoch': epoch,
+                    'tr_loss': tr_store,
+                    'vld_loss': vld_store,
+                    }, save_path)
 
     accelerator.print ("finished")
     return 0
