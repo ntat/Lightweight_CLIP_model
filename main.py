@@ -171,6 +171,7 @@ def main():
     ## Model hypers
 
     embed_dim = 128
+    # criterion = SigLipLoss(temperature_init=0.1, device=device)
     criterion = ContrastiveLoss(temperature_init=0.07, device=device)
     criterion = criterion.to(device)
 
