@@ -3,7 +3,7 @@ This is a minimal implementation of the CLIP model proposed by OpenAI, using PyT
 details: [Learning Transferable Visual Models From Natural Language 
 Supervision](https://arxiv.org/pdf/2103.00020)  
 Attention maps adapted for ViT by following: [Quantifying Attention Flow in Transformers](https://arxiv.org/pdf/2005.00928)  
-_(todo:)SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/pdf/2303.15343) 🚧_      
+SigLIP loss from: [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/pdf/2303.15343)    
 
 ![clip_model](assets/clip_desc.png)   
 
@@ -116,10 +116,13 @@ Top-5 retrieved. More results in `retrieval_result_pics` folder.
     <img src="zero_shot_classification_results/zero_out_8.png" width="600">
   </figure>
 </div>
+All results were obtained using the standard clip loss function. 
 
 # Discussion
 - What is lightweight about this?  
-  - With the current setup (batch=32, projection layer=128) it can be trained in a few hours in a modern GPU with with 10-12GB of vram and still get solid results. And, it scales near linearly the more GPU compute is added.
+  - With the current setup (batch=32, projection layer dimention=128) it can be trained in a few hours in a modern GPU with with 10-12GB of vram and still get solid results. And, it scales near linearly the more GPU compute is added.
+- Can I have a huge batch size (like 32k)?  
+  - No, and that's beyond the scope of this project. If you have the resources for something like this, you need to distribute the loss function computations with regards to the similarity matrix across multiple devices (that will be the most memory consuming part). Tip: with SigLip loss it is easier.   
 - What worked best?  
   - 1\) Using all available captions per training image, 2) Scheduling with Cosine Annealing Warm Restarts [in the (1,2) setting](assets/cos_warm_res.png), 3) Not decaying gains or biases. With this priority: 1) >> 2) > 3) - Data is the king!
 
