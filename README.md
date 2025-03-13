@@ -124,6 +124,6 @@ All results were obtained using the standard clip loss function.
 - Can I have a huge batch size (like 32k)?  
   - No, and that's beyond the scope of this project. If you have the resources for something like this, you need to distribute the batch (along with loss function computations with regards to the similarity matrix etc) across multiple devices (that will be the most memory consuming part). Tip: with SigLip loss it is easier.   
 - What worked best?  
-  - 1\) Using all available captions per training image, 2) Scheduling with Cosine Annealing Warm Restarts [in the (1,2) setting](assets/cos_warm_res.png), 3) Not decaying gains or biases. With this priority: 1) >> 2) > 3) - Data is the king!
+  - 1\) Using all available captions per training image, 2) Vanilla-CLIP loss + scheduling with Cosine Annealing Warm Restarts [in the (1,2) setting](assets/cos_warm_res.png), 3) Not decaying gains or biases. With this priority: 1) >> 2) > 3) - Data is the king!
 
 
