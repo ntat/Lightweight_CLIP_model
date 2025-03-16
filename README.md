@@ -116,7 +116,8 @@ Top-5 retrieved. More results in `retrieval_result_pics` folder.
     <img src="zero_shot_classification_results/zero_out_8.png" width="600">
   </figure>
 </div>
-All results were obtained using the standard clip loss function. 
+All results were obtained using the standard clip loss function. A trivial hyperparameter sweep was performed. Always adjust learning rates accordingly, when you increase or decrease the number of GPUs.
+
 
 # Discussion
 - What is lightweight about this?  
@@ -124,6 +125,6 @@ All results were obtained using the standard clip loss function.
 - Can I have a huge batch size (like 32k)?  
   - No, and that's beyond the scope of this project. If you have the resources for something like this, you need to distribute the batch (along with loss function computations with regards to the similarity matrix etc) across multiple devices (that will be the most memory consuming part). Tip: with SigLip loss it is easier.   
 - What worked best?  
-  - 1\) Using all available captions per training image, 2) Vanilla-CLIP loss + scheduling with Cosine Annealing Warm Restarts [in the (1,2) setting](assets/cos_warm_res.png), 3) Not decaying gains or biases. With this priority: 1) >> 2) > 3) - Data is the king!
+  - 1\) Using all five available captions per training image, 2) Vanilla-CLIP loss + scheduling with Cosine Annealing Warm Restarts [in the (1,2) setting](assets/cos_warm_res.png), 3) Not decaying gains or biases. With this priority: 1) >> 2) > 3) - Data is the king!
 
 
