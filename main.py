@@ -108,39 +108,17 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
         tr_store.append(avg_loss)
         accelerator.print(f'Epoch [{epoch+1}/{num_epochs}], Average Loss: {avg_loss:.10f}, Temperature: {criterion.logit_scale}')
 
-        if check_vld: #accelerator.is_main_process:
-            encoder_1.eval()
-            encoder_2.eval()
-            total_valid_loss = 0.0
-            num_batches_vld = 0
-            with torch.no_grad():
-                for vld_img, vld_txt in validloader:
-                    img_embeddings_vld = encoder_1(vld_img)
-                    txt_embeddings_vld = encoder_2(vld_txt)
-                    valid_loss, _ = criterion(img_embeddings_vld, txt_embeddings_vld) # over all items in tst
-                    total_valid_loss += valid_loss.item()
-                    num_batches_vld += 1
-
-            avg_loss_vld = total_valid_loss / num_batches_vld
+        if check_vld: # and accelerator.is_main_process:
+            avg_loss_vld = run_validation(encoder_1, encoder_2, validloader, criterion)
             vld_store.append(avg_loss_vld)
             accelerator.print(f'Epoch [{epoch+1}/{num_epochs}], Vld Loss: {avg_loss_vld:.10f}')
 
-            accelerator.wait_for_everyone()
+        accelerator.wait_for_everyone()
 
-            if accelerator.is_main_process:
-                save_path = os.path.join(output_dir, f"model_epoch_{epoch}.pt")
-                torch.save({
-                    'encoder_1': encoder_1.state_dict(),
-                    'encoder_2': encoder_2.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    'scheduler_state_dict': scheduler.state_dict(),
-                    'loss_state_dict': criterion.state_dict(),
-                    'epoch': epoch,
-                    'tr_loss': tr_store,
-                    'vld_loss': vld_store,
-                    }, save_path)
+        if accelerator.is_main_process and avg_loss_vld <= min(vld_store):
+            save_checkpoint(output_dir, epoch, encoder_1, encoder_2, optimizer, scheduler, criterion, tr_store, vld_store)
 
-    accelerator.print ("finished")
+    accelerator.print("finished")
     return 0
 
 def main():

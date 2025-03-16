@@ -273,6 +273,34 @@ def plot_images_and_bars(images, texts, probs, title="Zero Shot Classification o
     plt.savefig("zero_out.png", bbox_inches='tight', pad_inches=0.2)
     plt.show()
 
+
+def run_validation(encoder_1, encoder_2, validloader, criterion):
+    encoder_1.eval()
+    encoder_2.eval()
+    total_valid_loss = 0.0
+    num_batches = 0
+    with torch.no_grad():
+        for vld_img, vld_txt in validloader:
+            img_embeddings = encoder_1(vld_img)
+            txt_embeddings = encoder_2(vld_txt)
+            valid_loss, _ = criterion(img_embeddings, txt_embeddings)
+            total_valid_loss += valid_loss.item()
+            num_batches += 1
+    return total_valid_loss / num_batches
+
+def save_checkpoint(output_dir, epoch, encoder_1, encoder_2, optimizer, scheduler, criterion, tr_store, vld_store):
+    save_path = os.path.join(output_dir, f"model_epoch_{epoch}.pt")
+    torch.save({
+        'encoder_1': encoder_1.state_dict(),
+        'encoder_2': encoder_2.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'scheduler_state_dict': scheduler.state_dict(),
+        'loss_state_dict': criterion.state_dict(),
+        'epoch': epoch,
+        'tr_loss': tr_store,
+        'vld_loss': vld_store,
+    }, save_path)
+
 def plot_loss(train, vld):
     epochs = list(range(1, len(train) + 1))
     plt.figure(figsize=(10, 6))
