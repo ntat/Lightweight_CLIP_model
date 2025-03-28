@@ -67,8 +67,10 @@ CLIP is capable of:
 5. For inference, look into the `notebooks` section to see how to interact with the code. 
 
 # Results
+All results were obtained using the standard clip loss function. A trivial hyperparameter sweep was performed. Always adjust learning rates accordingly when you increase or decrease the number of GPUs.
 ## Text-to-Image Retrieval
-Top-5 retrieved. More results in `retrieval_result_pics` folder.
+Top-5 images retrieved from the test set given a text prompt.    
+More results in `retrieval_result_pics` folder.
 <div align="center">
   <figure>
     <img src="retrieval_result_pics/airplanes1.png" width="600">
@@ -94,7 +96,8 @@ Top-5 retrieved. More results in `retrieval_result_pics` folder.
 ---
 
 ## Zero-shot classification
-5 pictures picked at random from test data. More results in `zero_shot_classification_results` folder.
+We pick 5 pictures at random from the test set, and perform 0-shot classification.   
+More results in `zero_shot_classification_results` folder.
 <div align="center">
   <figure>
     <img src="zero_shot_classification_results/zero_out_6.png" width="600">
@@ -116,8 +119,6 @@ Top-5 retrieved. More results in `retrieval_result_pics` folder.
     <img src="zero_shot_classification_results/zero_out_8.png" width="600">
   </figure>
 </div>
-All results were obtained using the standard clip loss function. A trivial hyperparameter sweep was performed. Always adjust learning rates accordingly, when you increase or decrease the number of GPUs.
-
 
 # Discussion
 - What is lightweight about this?  
