@@ -115,7 +115,7 @@ def train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rat
 
         accelerator.wait_for_everyone()
 
-        if accelerator.is_main_process and avg_loss_vld <= min(vld_store):
+        if check_vld and accelerator.is_main_process and avg_loss_vld <= min(vld_store):
             save_checkpoint(output_dir, epoch, encoder_1, encoder_2, optimizer, scheduler, criterion, tr_store, vld_store)
 
     accelerator.print("finished")
