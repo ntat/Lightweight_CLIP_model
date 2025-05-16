@@ -142,11 +142,12 @@ def main():
     train_dataset = CocoCaptionDataset(coco_dataset_tr, mode="train")
     val_dataset = CocoCaptionDataset(coco_dataset_val, mode="val")
 
+    ## Model hyperameters 
+    # TODO: move everything to config
+    
     # train & valid sets
     dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True, drop_last=True, num_workers=16, pin_memory=True)
     validloader = DataLoader(val_dataset, batch_size=32, shuffle=False, drop_last=True, num_workers=16, pin_memory=True)
-
-    ## Model hypers
 
     embed_dim = 128
     # criterion = SigLipLoss(temperature_init=0.1, device=device)
@@ -169,7 +170,7 @@ def main():
 
     resume_training = False
 
-    # just rain the model
+    # just train the model
     train(encoder_1, encoder_2, criterion, dataloader, validloader, learning_rates, device, accelerator, config, resume_training)
 
 
